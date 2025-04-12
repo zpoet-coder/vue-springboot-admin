@@ -8,6 +8,14 @@ export const userInfoApi = {
 			method: 'get',
 		});
 	},
+	// 根据用户名称获取用户信息
+	querryUserByUserName: (userName: string) => {
+		return request({
+			url: `/users/by-userName`,
+			method: 'get',
+			params: { userName: userName },
+		});
+	},
 	// 新增用户
 	createUser: (data: object) => {
 		return request({

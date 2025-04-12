@@ -2,8 +2,8 @@
 	<div class="system-user-container layout-padding">
 		<el-card shadow="hover" class="layout-padding-auto">
 			<div class="system-user-search mb15">
-				<el-input size="default" placeholder="请输入用户名称" style="max-width: 180px"> </el-input>
-				<el-button size="default" type="primary" class="ml10">
+				<el-input size="default" v-model="userName" placeholder="请输入用户名称" style="max-width: 180px"> </el-input>
+				<el-button size="default" type="primary" class="ml10" @click="onQueryUserByUserName(userName)">
 					<el-icon>
 						<ele-Search />
 					</el-icon>
@@ -69,6 +69,7 @@ const UserDialog = defineAsyncComponent(() => import('/@/views/system/user/dialo
 
 // 定义变量内容
 const userDialogRef = ref();
+const userName = ref('');
 const state = reactive<SysUserState>({
 	tableData: {
 		data: [],
@@ -95,6 +96,15 @@ const getTableData = () => {
 		.catch(() => {
 			state.tableData.loading = false;
 		});
+};
+// 根据用户名称获取用户信息
+const onQueryUserByUserName = (userName: string) => {
+	state.tableData.loading = true;
+	userInfoApi.querryUserByUserName(userName).then((res) => {
+		state.tableData.data = res.data ? [res.data] : [];
+		state.tableData.total = state.tableData.data.length;
+		state.tableData.loading = false;
+	});
 };
 // 打开新增用户弹窗
 const onOpenAddUser = (type: string) => {

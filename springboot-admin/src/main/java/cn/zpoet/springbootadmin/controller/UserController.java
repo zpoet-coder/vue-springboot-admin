@@ -29,6 +29,12 @@ public class UserController {
         return Result.success(userInfo);
     }
 
+    @GetMapping("/by-userName")
+    public Result<UserInfoModel> getUserByUserName(@RequestParam String userName) {
+        UserInfoModel userInfo = userService.getUserByUserName(userName);
+        return Result.success(userInfo);
+    }
+
     @PostMapping
     public Result<UserInfoModel> createUser(@RequestBody UserInfoModel user) {
         UserInfoModel userInfo = userService.createUser(user);
