@@ -80,6 +80,10 @@ declare type TreeType = {
 	label: string;
 	children?: TreeType[];
 };
+declare type SelectOptionType = {
+	label: string;
+	value: string | number;
+};
 
 // user
 declare type RowUserType<T = any> = {
@@ -106,22 +110,39 @@ declare interface SysUserState {
 	tableData: SysUserTableType;
 }
 
-declare type DeptTreeType = {
+declare type DeptCascaderTreeType = {
 	value: string;
 	label: string;
-	children?: DeptTreeType[];
+	children?: DeptCascaderTreeType[];
 };
 
 // dept
-declare interface RowDeptType extends DeptTreeType {
-	deptLevel: string[];
-	person: string;
+declare interface RowDeptType extends DeptCascaderTreeType {
+	parentDept: string;
+	deptName: string;
+	leader: string;
+	parentId: number;
 	phone: string;
 	email: string;
+	sort: number;
+	status: boolean;
+	remark: string;
+	id: number;
+}
+
+declare interface DeptTreeType extends DeptCascaderTreeType {
+	id: number;
+	deptName: string;
+	parentId: number | null;
+	sort: number;
+	status: boolean;
+	remark: string;
+	createTime: string;
+	children?: DeptTreeType[];
 }
 
 interface SysDeptTableType extends TableType {
-	data: DeptTreeType[];
+	data: DeptCascaderTreeType[];
 }
 
 declare interface SysDeptState {

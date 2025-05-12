@@ -2,8 +2,8 @@
 	<div class="system-dept-container layout-padding">
 		<el-card shadow="hover" class="layout-padding-auto">
 			<div class="system-dept-search mb15">
-				<el-input size="default" placeholder="请输入部门名称" style="max-width: 180px"> </el-input>
-				<el-button size="default" type="primary" class="ml10">
+				<el-input size="default" v-model="deptName" placeholder="请输入部门名称" style="max-width: 180px"> </el-input>
+				<el-button size="default" type="primary" class="ml10" @click="onQueryDeptByDeptName(deptName)">
 					<el-icon>
 						<ele-Search />
 					</el-icon>
@@ -40,26 +40,28 @@
 				<el-table-column prop="createTime" label="创建时间" show-overflow-tooltip></el-table-column>
 				<el-table-column label="操作" show-overflow-tooltip width="140">
 					<template #default="scope">
-						<el-button size="small" text type="primary" @click="onOpenAddDept('add')">新增</el-button>
+						<el-button size="small" text type="primary" @click="onOpenAddDept('add', scope.row)">新增</el-button>
 						<el-button size="small" text type="primary" @click="onOpenEditDept('edit', scope.row)">修改</el-button>
 						<el-button size="small" text type="primary" @click="onTabelRowDel(scope.row)">删除</el-button>
 					</template>
 				</el-table-column>
 			</el-table>
 		</el-card>
-		<DeptDialog ref="deptDialogRef" @refresh="getTableData()" />
+		<DeptDialog ref="deptDialogRef" @refresh="getTableData" />
 	</div>
 </template>
 
 <script setup lang="ts" name="systemDept">
 import { defineAsyncComponent, ref, reactive, onMounted } from 'vue';
 import { ElMessageBox, ElMessage } from 'element-plus';
+import { deptIndoApi } from '/@/api/dept/index';
 
 // 引入组件
 const DeptDialog = defineAsyncComponent(() => import('/@/views/system/dept/dialog.vue'));
 
 // 定义变量内容
 const deptDialogRef = ref();
+const deptName = ref('');
 const state = reactive<SysDeptState>({
 	tableData: {
 		data: [],
@@ -76,40 +78,30 @@ const state = reactive<SysDeptState>({
 const getTableData = () => {
 	state.tableData.loading = true;
 	state.tableData.data = [];
-	state.tableData.data.push({
-		deptName: 'vueNextAdmin',
-		createTime: new Date().toLocaleString(),
-		status: true,
-		sort: Math.random(),
-		describe: '顶级部门',
-		id: Math.random(),
-		children: [
-			{
-				deptName: 'IT外包服务',
-				createTime: new Date().toLocaleString(),
-				status: true,
-				sort: Math.random(),
-				describe: '总部',
-				id: Math.random(),
-			},
-			{
-				deptName: '资本控股',
-				createTime: new Date().toLocaleString(),
-				status: true,
-				sort: Math.random(),
-				describe: '分部',
-				id: Math.random(),
-			},
-		],
+	deptIndoApi.getDeptTree().then((res) => {
+		if (res.code === 200) {
+			state.tableData.data = res.data;
+		} else {
+			ElMessage.error(res.msg);
+		}
 	});
 	state.tableData.total = state.tableData.data.length;
 	setTimeout(() => {
 		state.tableData.loading = false;
 	}, 500);
 };
+// 根据部门名称获取部门信息
+const onQueryDeptByDeptName = (deptName: string) => {
+	state.tableData.loading = true;
+	deptIndoApi.queryDeptByDeptName(deptName).then((res) => {
+		state.tableData.data = res.data ? [res.data] : [];
+		state.tableData.total = state.tableData.data.length;
+		state.tableData.loading = false;
+	});
+};
 // 打开新增菜单弹窗
-const onOpenAddDept = (type: string) => {
-	deptDialogRef.value.openDialog(type);
+const onOpenAddDept = (type: string, row?: DeptTreeType) => {
+	deptDialogRef.value.openDialog(type, row);
 };
 // 打开编辑菜单弹窗
 const onOpenEditDept = (type: string, row: DeptTreeType) => {
@@ -123,8 +115,15 @@ const onTabelRowDel = (row: DeptTreeType) => {
 		type: 'warning',
 	})
 		.then(() => {
-			getTableData();
-			ElMessage.success('删除成功');
+			deptIndoApi.deleteDept(row.id).then((res) => {
+				if (res.code === 200) {
+					ElMessage.success('删除成功');
+					getTableData();
+					ElMessage.success('删除成功');
+				} else {
+					ElMessage.error(res.msg);
+				}
+			});
 		})
 		.catch(() => {});
 };
