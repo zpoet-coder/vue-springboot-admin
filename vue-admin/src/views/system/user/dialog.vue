@@ -28,6 +28,7 @@
 								:data="state.deptData"
 								check-strictly
 								:render-after-expand="false"
+								show-checkbox
 								placeholder="请选择部门"
 							/>
 						</el-form-item>
@@ -43,7 +44,7 @@
 						</el-form-item>
 					</el-col>
 					<el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
-						<el-form-item label="性别" prop="sex">
+						<el-form-item label="性别" prop="gender">
 							<el-select v-model="state.ruleForm.gender" placeholder="请选择性别" clearable class="w100">
 								<el-option label="男" value="男"></el-option>
 								<el-option label="女" value="女"></el-option>
@@ -52,7 +53,7 @@
 					</el-col>
 					<el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
 						<el-form-item label="账户密码" prop="password">
-							<el-input v-model="state.ruleForm.password" placeholder="请输入" type="password" clearable></el-input>
+							<el-input v-model="state.ruleForm.password" placeholder="请输入" type="password" clearable show-password></el-input>
 						</el-form-item>
 					</el-col>
 					<!-- <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
@@ -75,7 +76,7 @@
 			<template #footer>
 				<span class="dialog-footer">
 					<el-button @click="onCancel" size="default">取 消</el-button>
-					<el-button type="primary" @click="onSubmit" size="default">{{ state.dialog.submitTxt }}</el-button>
+					<el-button type="primary" @click="onSubmit(userDialogFormRef)" size="default">{{ state.dialog.submitTxt }}</el-button>
 				</span>
 			</template>
 		</el-dialog>
@@ -86,6 +87,8 @@
 import { reactive, ref, nextTick } from 'vue';
 import { userInfoApi } from '/@/api/user/index';
 import { cloneDeep } from 'lodash-es';
+import { ElMessage, type FormInstance } from 'element-plus';
+import { deptIndoApi } from '/@/api/dept';
 
 // 定义子组件向父组件传值/事件
 const emit = defineEmits(['refresh']);
@@ -120,14 +123,36 @@ const rules = {
 	accountName: [{ required: true, message: '账户名称不能为空', trigger: 'blur' }],
 	roles: [{ required: true, message: '关联角色不能为空', trigger: 'blur' }],
 	department: [{ required: true, message: '部门不能为空', trigger: 'blur' }],
-	phone: [{ required: true, message: '手机号不能为空', trigger: 'blur' }],
-	email: [{ required: true, message: '邮箱不能为空', trigger: 'blur' }],
-	sex: [{ required: true, message: '性别不能为空', trigger: 'blur' }],
-	password: [{ required: true, message: '密码不能为空', trigger: 'blur' }],
+	phone: [
+		{ required: true, message: '手机号不能为空', trigger: 'blur' },
+		{
+			pattern: /^1[3-9]\d{9}$/,
+			message: '请输入有效的手机号',
+			trigger: 'blur',
+		},
+	],
+	email: [
+		{ required: true, message: '邮箱不能为空', trigger: 'blur' },
+		{
+			type: 'email',
+			message: '请输入有效的邮箱地址',
+			trigger: ['blur', 'change'],
+		},
+	],
+	gender: [{ required: true, message: '性别不能为空', trigger: 'blur' }],
+	password: [
+		{ required: true, message: '密码不能为空', trigger: 'blur' },
+		{
+			pattern: /^(?=.*[A-Za-z])(?=.*\d).{6,}$/,
+			message: '密码必须大于6位，且包含字母和数字',
+			trigger: 'blur',
+		},
+	],
 };
 
 // 打开弹窗
 const openDialog = (type: string, row: RowUserType) => {
+	getMenuData();
 	if (type === 'edit') {
 		state.ruleForm = cloneDeep(row);
 		state.dialog.title = '修改用户';
@@ -138,10 +163,22 @@ const openDialog = (type: string, row: RowUserType) => {
 		// 清空表单
 		nextTick(() => {
 			userDialogFormRef.value?.resetFields();
+			state.ruleForm = {
+				userName: '', // 用户名称
+				accountName: '', // 账户名称
+				roles: [] as string[], // 关联角色
+				department: '', // 部门
+				phone: '', // 手机号
+				email: '', // 邮箱
+				gender: '', // 性别
+				password: '', // 账户密码
+				overdueTime: '', // 账户过期
+				status: true, // 用户状态
+				describe: '', // 用户描述
+			};
 		});
 	}
 	state.dialog.isShowDialog = true;
-	getMenuData();
 };
 // 关闭弹窗
 const closeDialog = () => {
@@ -152,89 +189,56 @@ const onCancel = () => {
 	closeDialog();
 };
 // 提交
-const onSubmit = async () => {
-	closeDialog();
-	if (state.dialog.title === '新增用户') {
-		await userInfoApi.createUser(state.ruleForm);
-	} else {
-		await userInfoApi.editUser(state.ruleForm);
-	}
-	emit('refresh');
+const onSubmit = async (formEl: FormInstance | undefined) => {
+	if (!formEl) return;
+	await formEl.validate(async (valid: boolean) => {
+		if (!valid) {
+			ElMessage.error('表单验证失败，请检查输入');
+			return false;
+		}
+		// 表单验证成功
+		else {
+			closeDialog();
+			if (state.dialog.title === '新增用户') {
+				await userInfoApi.createUser(state.ruleForm).then((res) => {
+					if (res.code === 200) {
+						ElMessage.success(`新增用户${state.ruleForm.userName}成功!`);
+					} else {
+						ElMessage.error(res.msg);
+					}
+				});
+			} else {
+				await userInfoApi.editUser(state.ruleForm).then((res) => {
+					if (res.code === 200) {
+						ElMessage.success(`修改用户${state.ruleForm.userName}成功!`);
+					} else {
+						ElMessage.error(res.msg);
+					}
+				});
+			}
+			emit('refresh');
+		}
+	});
+};
+
+const filterDeptTreeData = (nodeList: any) => {
+	let result = nodeList.map((item: any) => {
+		return {
+			...item,
+			label: item.deptName,
+			value: item.id.toString(),
+			children: item.children.length > 0 ? filterDeptTreeData(item.children) : [],
+		};
+	});
+	return result;
 };
 // 初始化部门数据
 const getMenuData = () => {
-	state.deptData = [
-		{
-			value: '1',
-			label: 'Level one 1',
-			children: [
-				{
-					value: '1-1',
-					label: 'Level two 1-1',
-					children: [
-						{
-							value: '1-1-1',
-							label: 'Level three 1-1-1',
-						},
-					],
-				},
-			],
-		},
-		{
-			value: '2',
-			label: 'Level one 2',
-			children: [
-				{
-					value: '2-1',
-					label: 'Level two 2-1',
-					children: [
-						{
-							value: '2-1-1',
-							label: 'Level three 2-1-1',
-						},
-					],
-				},
-				{
-					value: '2-2',
-					label: 'Level two 2-2',
-					children: [
-						{
-							value: '2-2-1',
-							label: 'Level three 2-2-1',
-						},
-					],
-				},
-			],
-		},
-		{
-			value: '3',
-			label: 'Level one 3',
-			children: [
-				{
-					value: '3-1',
-					label: 'Level two 3-1',
-					children: [
-						{
-							value: '3-1-1',
-							label: 'Level three 3-1-1',
-						},
-					],
-				},
-				{
-					value: '3-2',
-					label: 'Level two 3-2',
-					children: [
-						{
-							value: '3-2-1',
-							label: 'Level three 3-2-1',
-						},
-					],
-				},
-			],
-		},
-	];
+	deptIndoApi.getDeptTree().then((res) => {
+		let allTreeDepts = res.data;
+		state.deptData = filterDeptTreeData(allTreeDepts);
+	});
 };
-
 // 暴露变量
 defineExpose({
 	openDialog,

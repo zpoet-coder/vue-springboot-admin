@@ -55,7 +55,7 @@
 			>
 			</el-pagination>
 		</el-card>
-		<UserDialog ref="userDialogRef" @refresh="getTableData()" />
+		<UserDialog ref="userDialogRef" @refresh="getTableData" />
 	</div>
 </template>
 
@@ -88,7 +88,6 @@ const getTableData = () => {
 	userInfoApi
 		.queryAllUsers()
 		.then((res) => {
-			console.log(res);
 			state.tableData.data = res.data;
 			state.tableData.total = state.tableData.data.length;
 			state.tableData.loading = false;
@@ -116,7 +115,6 @@ const onOpenEditUser = (type: string, row: RowUserType) => {
 };
 // 删除用户
 const onRowDel = (row: RowUserType) => {
-	// debugger;
 	ElMessageBox.confirm(`此操作将永久删除账户名称：“${row.userName}”，是否继续?`, '提示', {
 		confirmButtonText: '确认',
 		cancelButtonText: '取消',
