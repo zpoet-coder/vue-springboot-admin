@@ -4,7 +4,7 @@
 			<el-form ref="userDialogFormRef" :model="state.ruleForm" size="default" :rules="rules" label-width="90px">
 				<el-row :gutter="35">
 					<el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
-						<el-form-item label="账户名称" prop="userName">
+						<el-form-item label="用户名称" prop="userName">
 							<el-input v-model="state.ruleForm.userName" placeholder="请输入用户名称" clearable></el-input>
 						</el-form-item>
 					</el-col>

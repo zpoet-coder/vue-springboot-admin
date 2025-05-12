@@ -181,7 +181,7 @@ const onSubmit = async (formEl: FormInstance | undefined) => {
 		let { parentDept, ...restRuleForm } = state.ruleForm;
 		let sendData = {
 			...restRuleForm,
-			parentId: parentDept,
+			parentId: parentDept ? parentDept : '0',
 		};
 		if (state.dialog.title === '新增部门') {
 			const res = await deptIndoApi.createDept(sendData);
@@ -220,10 +220,6 @@ const getMenuData = async () => {
 		let allTreeDepts = res.data;
 		state.deptData = filterDeptTreeData(allTreeDepts);
 	});
-	// state.deptData.push({
-	// 	label: '无上级部门',
-	// 	value: '0',
-	// });
 };
 
 // 暴露变量

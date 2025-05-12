@@ -34,13 +34,12 @@ public class DeptServiceImpl implements DeptService {
     }
 
     @Override
-    public DeptInfoModel fillChildren(DeptInfoModel dept) {
+    public void fillChildren(DeptInfoModel dept) {
         List<DeptInfoModel> children = deptRepository.findByParentId(dept.getId());
         for (DeptInfoModel child : children) {
             fillChildren(child);
         }
         dept.setChildren(children);
-        return dept;
     }
 
     @Override

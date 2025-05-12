@@ -23,7 +23,7 @@ public class DeptInfoModel {
     /**
      * 上级部门 ID
      */
-    @Column(name = "parent_id")
+    @Column(name = "parent_id", nullable = false)
     private Long parentId = 0L;
 
     /**

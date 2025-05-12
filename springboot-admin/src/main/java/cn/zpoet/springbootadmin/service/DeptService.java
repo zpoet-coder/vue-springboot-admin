@@ -11,7 +11,7 @@ public interface DeptService {
 
     DeptInfoModel getDeptByDeptName(String deptName);
 
-    DeptInfoModel fillChildren(DeptInfoModel dept);
+    void fillChildren(DeptInfoModel dept);
 
     DeptInfoModel createDept(DeptInfoModel dept);
 
