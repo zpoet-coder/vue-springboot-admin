@@ -1,19 +1,14 @@
 <template>
 	<el-form size="large" class="login-content-form">
 		<el-form-item class="login-animation1">
-			<el-input text :placeholder="$t('message.account.accountPlaceholder1')" v-model="state.ruleForm.userName" clearable autocomplete="off">
+			<el-input text placeholder="请输入账号名称" v-model="state.ruleForm.username" clearable autocomplete="off">
 				<template #prefix>
 					<el-icon class="el-input__icon"><ele-User /></el-icon>
 				</template>
 			</el-input>
 		</el-form-item>
 		<el-form-item class="login-animation2">
-			<el-input
-				:type="state.isShowPassword ? 'text' : 'password'"
-				:placeholder="$t('message.account.accountPlaceholder2')"
-				v-model="state.ruleForm.password"
-				autocomplete="off"
-			>
+			<el-input :type="state.isShowPassword ? 'text' : 'password'" placeholder="请输入密码" v-model="state.ruleForm.password" autocomplete="off">
 				<template #prefix>
 					<el-icon class="el-input__icon"><ele-Unlock /></el-icon>
 				</template>
@@ -68,6 +63,7 @@ import { initBackEndControlRoutes } from '/@/router/backEnd';
 import { Session } from '/@/utils/storage';
 import { formatAxis } from '/@/utils/formatTime';
 import { NextLoading } from '/@/utils/loading';
+import { useLoginApi } from '/@/api/login';
 
 // 定义变量内容
 const { t } = useI18n();
@@ -78,8 +74,8 @@ const router = useRouter();
 const state = reactive({
 	isShowPassword: false,
 	ruleForm: {
-		userName: 'admin',
-		password: '123456',
+		username: '',
+		password: '',
 		code: '1234',
 	},
 	loading: {
@@ -94,10 +90,22 @@ const currentTime = computed(() => {
 // 登录
 const onSignIn = async () => {
 	state.loading.signIn = true;
+	// 获取 token
+	let token = '';
+	await useLoginApi.login(state.ruleForm).then((res) => {
+		if (res.code === 200) {
+			// 登录成功
+			token = res.data;
+		} else {
+			// 登录失败
+			state.loading.signIn = false;
+			ElMessage.error(res.msg);
+		}
+	});
 	// 存储 token 到浏览器缓存
-	Session.set('token', Math.random().toString(36).substr(0));
+	Session.set('token', token);
 	// 模拟数据，对接接口时，记得删除多余代码及对应依赖的引入。用于 `/src/stores/userInfo.ts` 中不同用户登录判断（模拟数据）
-	Cookies.set('userName', state.ruleForm.userName);
+	Cookies.set('userName', state.ruleForm.username);
 	if (!themeConfig.value.isRequestRoutes) {
 		// 前端控制路由，2、请注意执行顺序
 		const isNoPower = await initFrontEndControlRoutes();
