@@ -1,6 +1,7 @@
 package cn.zpoet.springbootadmin.config;
 
 import cn.zpoet.springbootadmin.utils.JwtAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -16,6 +17,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    @Value("${frontend.origin}")
+    private String frontendOrigin;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -34,7 +38,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOrigin("http://localhost:8888"); // 指定前端地址
+        config.addAllowedOrigin(frontendOrigin); // 指定前端地址
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
 
